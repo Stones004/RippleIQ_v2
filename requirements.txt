@@ -1,0 +1,26 @@
+# Backend
+fastapi
+uvicorn[standard]
+
+# Environment
+python-dotenv
+
+# LLM Inference
+groq
+
+# Graph Engine
+networkx
+
+# Data Validation
+pydantic
+
+# NLP / Matching
+spacy
+thefuzz
+python-levenshtein
+
+# Future Semantic Grounding (Phase 1)
+sentence-transformers
+torch
+numpy
+scikit-learn
