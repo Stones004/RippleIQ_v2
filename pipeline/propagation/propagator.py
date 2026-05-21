@@ -1,3 +1,4 @@
+from networkx.algorithms import shortest_paths
 from collections import deque
 import networkx as nx
 
@@ -5,8 +6,63 @@ MAX_DEPTH = 6
 MIN_SCORE = 0.05
 HOP_DECAY = 0.75
 
+def compute_precedent_modifier(
+    node,
+    precedents
+):
 
-def propagate(graph: nx.DiGraph, root_node: str) -> list[dict]:
+    if not precedents:
+        return 1.0
+
+    modifier = 1.0
+
+    for precedent in precedents:
+
+        precedent_node = (
+            precedent["canonical_node"]
+        )
+
+        precedent_score = (
+            precedent["score"]
+        )
+
+        precedent_impacts = precedent.get(
+            "canonical_impacts",
+            []
+        )  
+
+        normalized_node = node.strip()
+
+        normalized_impacts = [
+            impact.strip()
+            for impact in precedent_impacts
+        ]
+
+        print(
+            f"[DEBUG] "
+            f"NODE={node} | "
+            f"PRECEDENT_IMPACTS={precedent_impacts}"
+        )
+
+        if (
+            precedent_node.strip() == normalized_node
+            or normalized_node in normalized_impacts
+        ):
+
+            modifier += (
+                precedent_score * 0.15
+            )
+
+    return min(modifier, 1.5)
+
+
+
+def propagate(
+    graph: nx.DiGraph,
+    root_node: str,
+    precedents=None,
+    context=None
+):
     """
     BFS causal propagation from root_node.
 
@@ -50,9 +106,36 @@ def propagate(graph: nx.DiGraph, root_node: str) -> list[dict]:
         if hop > MAX_DEPTH:
             continue
 
-        cumulative_strength = parent_cs * edge_data["strength"]
-        effective_score = cumulative_strength * edge_data["probability"]
-        decayed_score = effective_score * (HOP_DECAY ** hop)
+        cumulative_strength = (
+            parent_cs * edge_data["strength"]
+        )
+
+        print("\n===== PRECEDENTS PASSED =====")
+        print(precedents)
+        print("=============================\n")
+
+        precedent_modifier = (
+            compute_precedent_modifier(
+                node,
+                precedents
+            )
+        )
+
+        print(
+            f"[PRECEDENT MODIFIER] "
+            f"{node} → {precedent_modifier:.4f}"
+        )
+
+        effective_score = (
+            cumulative_strength
+            * edge_data["probability"]
+            * precedent_modifier
+        )
+
+        decayed_score = (
+            effective_score
+            * (HOP_DECAY ** hop)
+        )
 
         if decayed_score < MIN_SCORE:
             continue
