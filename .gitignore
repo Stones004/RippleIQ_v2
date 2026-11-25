@@ -33,3 +33,6 @@ Thumbs.db
 
 # Logs
 *.log
+*.pem
+node_modules/
+repomix-output.xml
